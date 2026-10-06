@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #333; color: white; }
+        form { background: #444; display: inline-block; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        input { display: block; margin: 10px 0; padding: 10px; width: 220px; }
+        button { padding: 10px 15px; background: #dc3545; color: white; border: none; cursor: pointer; width: 100%; }
+        a { color: #add8e6; }
+    </style>
+</head>
+<body>
+    <h2>Admin පිවිසුම</h2>
+    <form id="adminForm">
+        <input type="password" id="adminPass" placeholder="Admin Password" required>
+        <button type="submit">Admin ලෙස ඇතුල් වන්න</button>
+    </form>
+    <br><br>
+    <a href="index.html">මුල් පිටුවට යන්න</a>
+
+    <script>
+        document.getElementById('adminForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let pass = document.getElementById('adminPass').value;
+
+            if(pass === '2010') {
+                localStorage.setItem('admin_logged', 'true');
+                // ඩෑෂ්බෝඩ් එකට හරියටම යවන විධානය
+                window.location.replace('admin_dashboard.html');
+            } else {
+                alert('වැරදි Admin මුරපදයක්!.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - O/L Exam</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f8f9fa; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; display: inline-block; }
+        form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); max-width: 550px; margin-bottom: 20px; }
+        input, select, textarea { display: block; margin: 10px 0; padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; }
+        button:hover { opacity: 0.9; }
+        a.logout { color: red; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 15px; }
+        .paper-box { background: #e9ecef; padding: 12px; margin: 10px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; max-width: 550px; }
+        .delete-btn { background: #dc3545; padding: 6px 12px; font-size: 13px; width: auto; }
+        .q-key-group { background: #f1f3f5; padding: 10px; margin: 8px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #333; display: flex; justify-content: center; align-items: center; z-index: 999;
+        }
+        .login-box { background: #444; padding: 30px; border-radius: 8px; text-align: center; color: white; width: 300px; }
+        .login-box input { width: 100%; margin: 15px 0; color: black; }
+        .login-box button { width: 100%; background: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <!-- Admin Login Screen -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>Admin පිවිසුම</h2>
+            <p>කරුණාකර මුරපදය (2010) ඇතුළත් කරන්න:</p>
+            <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+                <input type="password" id="adminPassInput" placeholder="Password (2010)" required>
+                <button type="submit">ඇතුල් වන්න</button>
+            </form>
+            <br>
+            <a href="index.html" style="color: #add8e6; text-decoration: none;">මුල් පිටුවට යන්න</a>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent" style="display:none;">
+        <h1>පාලක මණ්ඩල පිටුව (Admin Panel)</h1>
+        
+        <div class="card">
+            <h3>ලියාපදිංචි වී ඇති මුළු සිසුන් ගණන:</h3>
+            <p id="studentCount" style="font-size: 28px; font-weight: bold; color: #007bff; text-align: center; margin: 5px 0;">0</p>
+        </div>
+
+        <h2>අලුතින් ප්‍රශ්න පත්‍රයක් (Google Drive PDF Link + Timer + Answer Key) එක් කිරීම</h2>
+        
+        <form id="paperMetaForm">
+            <label><b>ප්‍රශ්න පත්‍රයේ නම:</b></label>
+            <input type="text" id="paperTitle" placeholder="උදා: 10 ශ්‍රේණිය විද්‍යාව - වාර පරීක්ෂාව" required>
+            
+            <label><b>කාලය (විනාඩි වලින්):</b></label>
+            <input type="number" id="paperTime" placeholder="උදා: 30" required>
+
+            <label><b>ප්‍රශ්න පත්‍රයේ Google Drive PDF Share Link එක මෙහි දමන්න:</b></label>
+            <input type="url" id="pdfLink" placeholder="https://drive.google.com/file/d/.../view?usp=sharing" required>
+            <small style="color: #666; display: block; margin-bottom: 10px;">(Google Drive එකට දාලා 'Anyone with the link can view' පර්මිෂන් දීලා ලින්ක් එක කොපි කරලා මෙතනට දාන්න)</small>
+            
+            <label><b>මුළු ප්‍රශ්න ගණන:</b></label>
+            <input type="number" id="totalQuestions" min="1" max="100" placeholder="උදා: 10" required>
+
+            <button type="submit" id="nextBtn" style="margin-top: 15px; background: #007bff;">ඊළඟට (නිවැරදි පිළිතුරු ඇතුළත් කරන්න)</button>
+        </form>
+
+        <form id="answerKeyForm" style="display:none;">
+            <h3 id="formPaperTitle" style="color: #007bff; margin-top:0;"></h3>
+            <p style="font-size: 14px; color: #555;">ප්‍රශ්න අංකවලට අදාළ නිවැරදි පිළිතුර (1, 2, 3 හෝ 4) මෙහි හරියටම තෝරන්න:</p>
+            
+            <div id="answerKeyInputs"></div>
+
+            <button type="submit" style="margin-top: 15px;">ප්‍රශ්න පත්‍රය සම්පූර්ණයෙන් ප්‍රකාශ කරන්න</button>
+        </form>
+
+        <h2>දැන් සූදානම් කර ඇති ප්‍රශ්න පත්‍ර:</h2>
+        <div id="papersList"><p>ප්‍රශ්න පත්‍ර ලෝඩ් වෙමින් පවතී...</p></div>
+
+        <br>
+        <a href="#" class="logout" onclick="adminLogout()">ඉවත් වන්න (Logout)</a>
+    </div>
+
+    <!-- Firebase Scripts (Firestore විතරයි දැන් පාවිච්ච වන්නේ) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVwy650kdJpKOBiv6mfjk1oS8h4YtnWHQ",
+            authDomain: "onlin--exsam.firebaseapp.com",
+            projectId: "onlin--exsam",
+            storageBucket: "onlin--exsam.firebasestorage.app",
+            messagingSenderId: "621803758229",
+            appId: "1:621803758229:web:943bdb53ab2dc30714f19c",
+            measurementId: "G-CC2N3NZVXD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        if(localStorage.getItem('admin_logged') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            loadDashboardData();
+        }
+
+        window.handleAdminLogin = function(e) {
+            e.preventDefault();
+            let pass = document.getElementById('adminPassInput').value;
+            if(pass === '2010') {
+                localStorage.setItem('admin_logged', 'true');
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+                loadDashboardData();
+            } else {
+                alert('වැරදි මුරපදයක්! කරුණාකර 2010 ලෙස ඇතුළත් කරන්න.');
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "users"));
+                document.getElementById('studentCount').innerText = querySnapshot.size;
+            } catch (error) {
+                console.error("Error loading students count: ", error);
+                document.getElementById('studentCount').innerText = "0";
+            }
+            loadPapersList();
+        }
+
+        let tempPaperData = {};
+
+        document.getElementById('paperMetaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let title = document.getElementById('paperTitle').value;
+            let timeInMinutes = parseInt(document.getElementById('paperTime').value);
+            let pdfLink = document.getElementById('pdfLink').value;
+            let totalQ = parseInt(document.getElementById('totalQuestions').value);
+
+            // Google Drive ලින්ක් එක Embed කරගත හැකි ආකාරයට (preview) හැරවීම
+            // උදා: https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/file/d/FILE_ID/preview
+            let formattedUrl = pdfLink;
+            if(pdfLink.includes('drive.google.com')) {
+                formattedUrl = pdfLink.replace('/view?usp=sharing', '/preview').replace('/view', '/preview');
+            }
+
+            tempPaperData = {
+                title: title,
+                time: timeInMinutes * 60,
+                pdfUrl: formattedUrl,
+                totalQ: totalQ
+            };
+
+            document.getElementById('paperMetaForm').style.display = 'none';
+            document.getElementById('answerKeyForm').style.display = 'block';
+            document.getElementById('formPaperTitle').innerText = "ප්‍රශ්න පත්‍රය: " + title;
+
+            let container = document.getElementById('answerKeyInputs');
+            let html = "";
+            for(let i = 0; i < totalQ; i++) {
+                html += `<div class="q-key-group">
+                    <label><b>ප්‍රශ්න අංක ${i + 1} සඳහා නිවැරදි පිළිතුර:</b></label>
+                    <select name="correct_ans_${i}" required>
+                        <option value="0">පිළිතුර 1 (Option 1)</option>
+                        <option value="1">පිළිතුර 2 (Option 2)</option>
+                        <option value="2">පිළිතුර 3 (Option 3)</option>
+                        <option value="3">පිළිතුර 4 (Option 4)</option>
+                    </select>
+                </div>`;
+            }
+            container.innerHTML = html;
+        });
+
+        document.getElementById('answerKeyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let questionsList = [];
+            for(let i = 0; i < tempPaperData.totalQ; i++) {
+                let correctVal = parseInt(document.querySelector(`select[name="correct_ans_${i}"]`).value);
+                questionsList.push({
+                    question: `ප්‍රශ්න අංක ${i + 1}`,
+                    options: ["1", "2", "3", "4"],
+                    correct: correctVal
+                });
+            }
+
+            let finalPaperData = {
+                title: tempPaperData.title,
+                time: tempPaperData.time,
+                pdfUrl: tempPaperData.pdfUrl,
+                questions: questionsList
+            };
+
+            try {
+                await addDoc(collection(db, "papers"), finalPaperData);
+                alert('ප්‍රශ්න පත්‍රය සහ නිවැරදි පිළිතුරු සාර්ථකව ඔන්ලයින් සුරක්ෂිත කරන ලදී!');
+                location.reload();
+            } catch (error) {
+                console.error("Error adding paper: ", error);
+                alert('පත්‍රය සුරක්ෂිත කිරීමේදී දෝෂයක් ඇති විය: ' + error.message);
+            }
+        });
+
+        async function loadPapersList() {
+            let listDiv = document.getElementById('papersList');
+            try {
+                const querySnapshot = await getDocs(collection(db, "papers"));
+                if(querySnapshot.empty) {
+                    listDiv.innerHTML = "<p>තවම ප්‍රශ්න පත්‍ර සකසා නැත.</p>";
+                    return;
+                }
+                let html = "";
+                let i = 1;
+                querySnapshot.forEach((docSnap) => {
+                    let p = docSnap.data();
+                    let paperDocId = docSnap.id;
+                    let timeMin = Math.floor(p.time / 60);
+                    html += `<div class="paper-box">
+                        <div>
+                            <b>${i}. ${p.title}</b><br>
+                            <small>කාලය: ${timeMin} විනාඩි | ප්‍රශ්න ගණන: ${p.questions ? p.questions.length : 0}</small>
+                        </div>
+                        <button class="delete-btn" onclick="deletePaper('${paperDocId}')">ඉවත් කරන්න</button>
+                    </div>`;
+                    i++;
+                });
+                listDiv.innerHTML = html;
+            } catch (error) {
+                console.error("Error loading papers: ", error);
+                listDiv.innerHTML = `<p style="color: red;">ප්‍රශ්න පත්‍ර ලබාගැනීමේ දෝෂයක් ඇත: ${error.message}</p>`;
+            }
+        }
+
+        window.deletePaper = async function(paperId) {
+            if(confirm('මෙම ප්‍රශ්න පත්‍රය ඉවත් කිරීමට අවශ්‍ය බව විශ්වාසද?')) {
+                try {
+                    await deleteDoc(doc(db, "papers", paperId));
+                    alert('ප්‍රශ්න පත්‍රය සාර්ථකව ඉවත් කරන ලදී!');
+                    loadPapersList();
+                } catch (error) {
+                    console.error("Error deleting paper: ", error);
+                    alert('ඉවත් කිරීමේදී දෝෂයක් ඇති විය.');
+                }
+            }
+        }
+
+        window.adminLogout = function() {
+            localStorage.removeItem('admin_logged');
+            location.reload();
+        }
+    </script>
+</body>
+</html>

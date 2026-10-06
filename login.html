@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Login</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f4;
+            --text-color: #333;
+            --card-bg: white;
+            --input-bg: #fff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #f4f4f4;
+            --card-bg: #1e1e1e;
+            --input-bg: #2a2a2a;
+        }
+
+        body { 
+            font-family: sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            transition: 0.3s;
+        }
+
+        /* RGB Glowing Border Effect */
+        .login-container { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 10px; 
+            width: 320px; 
+            text-align: center;
+            border: 2px solid transparent;
+            animation: rgbBorder 6s infinite linear;
+        }
+
+        @keyframes rgbBorder {
+            0% { border-color: #ff0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
+            33% { border-color: #00ff00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+            66% { border-color: #0000ff; box-shadow: 0 0 15px rgba(0, 0, 255, 0.3); }
+            100% { border-color: #ff0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
+        }
+
+        input { 
+            display: block; 
+            margin: 15px 0; 
+            padding: 10px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button { 
+            padding: 10px 15px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            width: 100%; 
+            border-radius: 5px; 
+            font-weight: bold;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .mode-btn { background: #444; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; border: none; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="top-right">
+        <button class="mode-btn" onclick="toggleTheme()">🌙 Dark / ☀️ Light</button>
+    </div>
+
+    <div class="login-container">
+        <h2>ශිෂ්‍ය පිවිසුම</h2>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="ඔබේ නම (Username)" required>
+            <input type="password" id="password" placeholder="මුරපදය (Password)" required>
+            <button type="submit">පිවිසෙන්න</button>
+        </form>
+        <p style="margin-top: 15px; font-size: 14px;">ගිණුමක් නැද්ද? <a href="register.html">ලියාපදිංචි වන්න</a></p>
+    </div>
+
+    <!-- Firebase SDK na login logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVwy650kdJpKOBiv6mfjk1oS8h4YtnWHQ",
+            authDomain: "onlin--exsam.firebaseapp.com",
+            projectId: "onlin--exsam",
+            storageBucket: "onlin--exsam.firebasestorage.app",
+            messagingSenderId: "621803758229",
+            appId: "1:621803758229:web:943bdb53ab2dc30714f19c",
+            measurementId: "G-CC2N3NZVXD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function toggleTheme() {
+            let body = document.body;
+            if(body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        if(localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let user = document.getElementById('username').value.trim();
+            let pass = document.getElementById('password').value.trim();
+
+            try {
+                // Tanga ba-users na Firebase Firestore "users" collection
+                const querySnapshot = await getDocs(collection(db, "users"));
+                let found = false;
+
+                querySnapshot.forEach((docSnap) => {
+                    let data = docSnap.data();
+                    if(data.name === user && data.pass === pass) {
+                        found = true;
+                    }
+                });
+
+                if(found) {
+                    localStorage.setItem('current_student', user);
+                    window.location.href = 'student.html'; // Oba ba student dashboard page nkomo botia
+                } else {
+                    alert('වැරදි නමක් හෝ මුරපදයක්! කරුණාකර නැවත උත්සාහ කරන්න.');
+                }
+            } catch (error) {
+                console.error("Error logging in: ", error);
+                alert('පිවිසීමේ දෝෂයක් ඇති විය.');
+            }
+        });
+    </script>
+</body>
+</html>
